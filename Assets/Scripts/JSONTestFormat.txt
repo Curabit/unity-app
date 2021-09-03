@@ -1,0 +1,24 @@
+{
+    "isStop": false,
+	"current": {
+	"file-name": "current-video",
+	"isOnLoop": true
+	},
+    "total-count": 4,
+    "next": [{
+	"file-name": "next-video-1",
+	"isOnLoop": true
+	},
+	{
+	"file-name": "next-video-2",
+	"isOnLoop": false
+	},
+	{
+	"file-name": "next-video-3",
+	"isOnLoop": false
+	}],
+	"previous": {
+	"file-name": "previous-video",
+	"isOnLoop": false
+	}
+}
