@@ -23,6 +23,7 @@ public class PlaybackScript : MonoBehaviour
 
     void Start()
     {
+        Debug.LogWarning("Playback started");
         StartCoroutine(PlayVideo());
     }
 

@@ -4,6 +4,7 @@ using System.Text;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
 
 public class Verification : MonoBehaviour
 {
@@ -14,11 +15,16 @@ public class Verification : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        //gameObj = GameObject.Find("Playback Object");
+        //gameObj.SetActive(false);
+        //Debug.LogWarning("Playback Object set to FALSE");
         StartCoroutine(PostRequest());    
     }
 
     IEnumerator PostRequest()
     {
+        SceneManager.LoadSceneAsync("playback");
+        Debug.LogWarning("Async request sent");
         string therapistIDFileDataPath = Application.dataPath + @"/Scripts/T_ID";
         string therapistID = File.ReadAllText(therapistIDFileDataPath);
         Debug.LogWarning(therapistID);
@@ -115,6 +121,8 @@ public class Verification : MonoBehaviour
         string userStatus = response.session_details.status;
         Debug.Log(sessionRequest.downloadHandler.text);
         Debug.Log(userStatus);
+
+        Debug.LogWarning("Changing Scene");
 
         yield return null;
     }
