@@ -5,26 +5,30 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
+using TMPro;
 
 public class Verification : MonoBehaviour
 {
     private string apiEndpoint = "https://app.curabit.in/api/endpoint";
     private RequestID requestID = new RequestID();
     private string tempCode;
+    private TMP_Text m_TextComponent;
+    private Transform TMPTransform;
+    private GameObject pairingText;
 
     // Start is called before the first frame update
     void Start()
     {
-        //gameObj = GameObject.Find("Playback Object");
-        //gameObj.SetActive(false);
-        //Debug.LogWarning("Playback Object set to FALSE");
         StartCoroutine(PostRequest());    
     }
 
     IEnumerator PostRequest()
     {
-        SceneManager.LoadSceneAsync("playback");
-        Debug.LogWarning("Async request sent");
+        pairingText = GameObject.Find("Pairing Text");
+        pairingText.SetActive(false);
+        TMPTransform = pairingText.transform.Find("Text (TMP)");
+        m_TextComponent = TMPTransform.GetComponent<TMP_Text>();
+
         string therapistIDFileDataPath = Application.dataPath + @"/Scripts/T_ID";
         string therapistID = File.ReadAllText(therapistIDFileDataPath);
         Debug.LogWarning(therapistID);
@@ -54,6 +58,9 @@ public class Verification : MonoBehaviour
                 pairingCodeWebRequest.SetRequestHeader("Content-Type", "application/json");
                 yield return pairingCodeWebRequest.SendWebRequest();
 
+                pairingText.SetActive(true);
+                m_TextComponent.text = "Log in to app.curabit.in and enter headset linking code: " + requestID.setPairingCode.code;
+
                 if (pairingCodeWebRequest.responseCode == 400)
                 {
                     Debug.LogWarning("Code already exists.");
@@ -62,6 +69,7 @@ public class Verification : MonoBehaviour
                 {
                     Debug.Log("Unique code generated");
                     tempCode = requestID.setPairingCode.code;
+                    pairingText.SetActive(false);
                     break;
                 }
                 else
@@ -122,9 +130,17 @@ public class Verification : MonoBehaviour
         Debug.Log(sessionRequest.downloadHandler.text);
         Debug.Log(userStatus);
 
+        while (userStatus == "on-standby")
+        {
+            Debug.Log("on-standby");
+            yield return null;
+        }
+
         Debug.LogWarning("Changing Scene");
 
-        yield return null;
+        SceneManager.LoadSceneAsync("playback", LoadSceneMode.Single);
+        Debug.LogWarning("Async request sent");
+        //yield return new WaitForSecondsRealtime(10);
     }
 
     public string RandomString(int length)
