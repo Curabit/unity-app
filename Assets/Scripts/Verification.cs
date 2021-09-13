@@ -30,8 +30,6 @@ public class Verification : MonoBehaviour
         pairingText.SetActive(false);
         TMPTransform = pairingText.transform.Find("Text (TMP)");
         m_TextComponent = TMPTransform.GetComponent<TMP_Text>();
-        // Loads the second Scene
-        SceneManager.LoadScene("playback", LoadSceneMode.Additive);
     }
 
     IEnumerator PostRequest()
@@ -163,10 +161,12 @@ public class Verification : MonoBehaviour
             Debug.LogWarning("SESSION ID RECEIVED = " + session_id);
         }
 
-        
-        SceneManager.SetActiveScene(SceneManager.GetSceneByName("playback"));
-
-        //SceneManager.LoadSceneAsync("playback", LoadSceneMode.Additive);
+        // Loads the second Scene
+        //yield return SceneManager.LoadSceneAsync("playback", LoadSceneMode.Additive);
+        //Debug.Log("Active Scene : " + SceneManager.GetActiveScene().name);
+        //SceneManager.SetActiveScene(SceneManager.GetSceneByName("playback"));
+        //Debug.Log("Active Scene : " + SceneManager.GetActiveScene().name);
+         SceneManager.LoadSceneAsync("playback", LoadSceneMode.Single);
         //Debug.LogWarning("Async request sent");
         //yield return new WaitForSecondsRealtime(10);
     }
