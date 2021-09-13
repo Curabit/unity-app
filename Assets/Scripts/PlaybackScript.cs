@@ -7,7 +7,6 @@ using UnityEngine.Video;
 using UnityEngine.UI;
 using UnityEngine.Networking;
 using Newtonsoft.Json;
-using UnityEngine.SceneManagement;
 
 public class PlaybackScript : MonoBehaviour
 {
@@ -178,6 +177,7 @@ public class PlaybackScript : MonoBehaviour
                 StartCoroutine(PlayVideo(false));
             }
 
+            // Checking in video is meant to be paused
             if (response.isPaused == true)
             {
                 videoPlayerDict[currentFileName].Pause();
@@ -192,23 +192,25 @@ public class PlaybackScript : MonoBehaviour
                 videoPlayerDict[currentFileName].Play();
             }
 
-            //(Check if we have reached half way)
+            // Check if we have reached half way
             if (!reachedHalfWay && videoPlayerDict[currentFileName].time >= (videoPlayerDict[currentFileName].length / 2))
             {
                 reachedHalfWay = true; //Set to true so that we don't evaluate this again
 
                 //Make sure that the NEXT VideoPlayer index is valid otherwise exit since this is the end
-                //if (nextIndex >= totalVideoCount)
-                //{
-                //    Debug.LogWarning("End of All Videos: " + videoIndex);
-                //    yield break;
-                //}
-
-                //Prepare the NEXT videos
-                for (int i = 0; i < nextQueue.Count; i++)
+                if (nextQueue == null)
                 {
-                    videoPlayerDict[nextQueue[i].FileName].Prepare();
-                    Debug.LogWarning("Ready to Prepare NEXT Video: " + nextQueue[i].FileName);
+                    Debug.LogWarning("End of All Videos, no videos to prepare");
+                    // ADD BOOL FOR VIDEO STOP
+                }
+                else
+                {
+                    //Prepare the NEXT videos
+                    for (int i = 0; i < nextQueue.Count; i++)
+                    {
+                        videoPlayerDict[nextQueue[i].FileName].Prepare();
+                        Debug.LogWarning("Ready to Prepare NEXT Video: " + nextQueue[i].FileName);
+                    }
                 }
             }
             yield return null;
