@@ -1,4 +1,3 @@
-using Newtonsoft.Json;
 using System.IO;
 using System.Text;
 using System.Collections;
@@ -6,6 +5,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 using TMPro;
+using Newtonsoft.Json;
 
 public class Verification : MonoBehaviour
 {
@@ -15,6 +15,8 @@ public class Verification : MonoBehaviour
     private TMP_Text m_TextComponent;
     private Transform TMPTransform;
     private GameObject pairingText;
+    public string userStatus;
+    public static string session_id;
 
     // Start is called before the first frame update
     void Start()
@@ -22,30 +24,33 @@ public class Verification : MonoBehaviour
         StartCoroutine(PostRequest());    
     }
 
-    IEnumerator PostRequest()
+    void Awake()
     {
         pairingText = GameObject.Find("Pairing Text");
         pairingText.SetActive(false);
         TMPTransform = pairingText.transform.Find("Text (TMP)");
         m_TextComponent = TMPTransform.GetComponent<TMP_Text>();
+        // Loads the second Scene
+        SceneManager.LoadScene("playback", LoadSceneMode.Additive);
+    }
 
-        string therapistIDFileDataPath = Application.dataPath + @"/Scripts/T_ID";
-        string therapistID = File.ReadAllText(therapistIDFileDataPath);
-        Debug.LogWarning(therapistID);
-        requestID.getUserSession = new GetUserSession();
-        requestID.getUserSession.id = therapistID;
-
-        // get_user_session Request
-        string userSessionRequest = JsonConvert.SerializeObject(requestID.getUserSession);
-        UnityWebRequest sessionRequest = UnityWebRequest.Put(apiEndpoint, userSessionRequest);
-        sessionRequest.SetRequestHeader("Content-Type", "application/json");
-        sessionRequest.downloadHandler = new DownloadHandlerBuffer();
-        yield return sessionRequest.SendWebRequest();
-
-        Debug.LogWarning("SESSION REQUEST Response Code: " + sessionRequest.responseCode);
-
-        if (sessionRequest.responseCode == 400)
+    IEnumerator PostRequest()
+    {
+        string therapistIDFileDataPath = Application.persistentDataPath + @"/T_ID";
+        Debug.Log("Data path: " + therapistIDFileDataPath);
+        string therapistID;
+        if (File.Exists(therapistIDFileDataPath))
         {
+            therapistID = File.ReadAllText(therapistIDFileDataPath);
+            Debug.LogWarning(therapistID + "Therapist ID Generated");
+            requestID.getUserSession = new GetUserSession();
+            requestID.getUserSession.id = therapistID;
+        }
+        else
+        {
+            Debug.LogWarning("File does not exist yet");
+
+            // ADD TO ELSE
             while (true)
             {
                 // set_pairing_code Request
@@ -65,11 +70,10 @@ public class Verification : MonoBehaviour
                 {
                     Debug.LogWarning("Code already exists.");
                 }
-                else if (pairingCodeWebRequest.responseCode == 201) // VERIFY RESPONSE CODE
+                else if (pairingCodeWebRequest.responseCode == 201)
                 {
                     Debug.Log("Unique code generated");
                     tempCode = requestID.setPairingCode.code;
-                    pairingText.SetActive(false);
                     break;
                 }
                 else
@@ -106,6 +110,12 @@ public class Verification : MonoBehaviour
                         byte[] therapistIDToFile = new UTF8Encoding(true).GetBytes(therapistID);
                         fs.Write(therapistIDToFile, 0, therapistIDToFile.Length);
                     }
+
+                    requestID.getUserSession = new GetUserSession();
+                    requestID.getUserSession.id = therapistID;
+
+                    pairingText.SetActive(false);
+
                     yield return null;
                     break;
                 }
@@ -120,26 +130,44 @@ public class Verification : MonoBehaviour
                 yield return null;
             }
         }
-        else if (sessionRequest.responseCode != 200 && sessionRequest.responseCode != 400)
+
+
+        while (true)
         {
-            Debug.LogWarning("get_user_session Error: " + sessionRequest.responseCode + sessionRequest.error);
+            // get_user_session Request
+            string userSessionRequest = JsonConvert.SerializeObject(requestID.getUserSession);
+            UnityWebRequest sessionRequest = UnityWebRequest.Put(apiEndpoint, userSessionRequest);
+            sessionRequest.SetRequestHeader("Content-Type", "application/json");
+            sessionRequest.downloadHandler = new DownloadHandlerBuffer();
+            yield return sessionRequest.SendWebRequest();
+
+            Debug.LogWarning("SESSION REQUEST Response Code: " + sessionRequest.responseCode);
+
+            if (sessionRequest.responseCode != 200)
+            {
+                Debug.LogWarning("get_user_session Code: " + sessionRequest.responseCode + "Error: " +sessionRequest.error);
+            }
+
+            Link sessionResponse = JsonConvert.DeserializeObject<Link>(sessionRequest.downloadHandler.text);
+            Debug.Log(sessionRequest.downloadHandler.text);
+            userStatus = sessionResponse.session_details.status;
+       
+            Debug.Log(userStatus);
+
+            if (userStatus != "on-standby")
+            {
+                session_id = userStatus;
+                break;
+            }
+
+            Debug.LogWarning("SESSION ID RECEIVED = " + session_id);
         }
 
-        Link response = JsonConvert.DeserializeObject<Link>(sessionRequest.downloadHandler.text);
-        string userStatus = response.session_details.status;
-        Debug.Log(sessionRequest.downloadHandler.text);
-        Debug.Log(userStatus);
+        
+        SceneManager.SetActiveScene(SceneManager.GetSceneByName("playback"));
 
-        while (userStatus == "on-standby")
-        {
-            Debug.Log("on-standby");
-            yield return null;
-        }
-
-        Debug.LogWarning("Changing Scene");
-
-        SceneManager.LoadSceneAsync("playback", LoadSceneMode.Single);
-        Debug.LogWarning("Async request sent");
+        //SceneManager.LoadSceneAsync("playback", LoadSceneMode.Additive);
+        //Debug.LogWarning("Async request sent");
         //yield return new WaitForSecondsRealtime(10);
     }
 

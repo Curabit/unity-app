@@ -7,6 +7,7 @@ using UnityEngine.Video;
 using UnityEngine.UI;
 using UnityEngine.Networking;
 using Newtonsoft.Json;
+using UnityEngine.SceneManagement;
 
 public class PlaybackScript : MonoBehaviour
 {
@@ -38,6 +39,11 @@ public class PlaybackScript : MonoBehaviour
         }
     }
 
+    //void Awake()
+    //{
+         
+    //}
+
     IEnumerator CheckState()
     {
         yield return StartCoroutine(JSONRequest());
@@ -51,13 +57,15 @@ public class PlaybackScript : MonoBehaviour
                 yield return null;
             //    Debug.LogWarning("Stop signal RECEIVED");
             }
-            //EditorApplication.isPlaying = false;
+            //SceneManager.LoadSceneAsync("Verification and Play Area", LoadSceneMode.Single);
         }
     }
 
     IEnumerator JSONRequest()
     {
-        string url = "https://app.curabit.in/api/json";
+        
+        string url = "https://app.curabit.in/session/info/unity/" + Verification.session_id;
+        Debug.LogWarning("SESSION ID = " + Verification.session_id);
         UnityWebRequest request = UnityWebRequest.Get(url);
         yield return request.SendWebRequest();
         Debug.Log("Request sent");
